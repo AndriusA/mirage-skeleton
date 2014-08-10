@@ -14,7 +14,13 @@ module Main (C:CONSOLE) (S:STACKV4) = struct
   module H  = HTTP.Make(CH)
 
   let start console s =
+  ignore begin
+    while_lwt true do OS.Time.sleep 1.0 >> C.log_s console "Heartbeat" done
+  end;
 
+
+    C.log_s console "Console started" 
+      >>= fun() ->
     C.log_s console (sprintf "IP address: %s\n" (Ipaddr.V4.to_string (S.IPV4.get_ipv4 (S.ipv4 s)))) >>= fun () ->
     let http_callback conn_id req body =
       let path = Uri.path (H.Server.Request.uri req) in
@@ -33,6 +39,8 @@ module Main (C:CONSOLE) (S:STACKV4) = struct
         C.log_s console "got udp on 53"
     );
 
+    C.log_s console "listen 8080" 
+      >>= fun() ->
     S.listen_tcpv4 s 8080 (
       fun flow ->
         let dst, dst_port = T.get_dest flow in
@@ -54,6 +62,8 @@ module Main (C:CONSOLE) (S:STACKV4) = struct
         | `Error e -> C.log_s console (red "read: error")
     );
 
+    C.log_s console "listen 80" 
+      >>= fun() ->
     S.listen_tcpv4 s 80 (H.Server.listen spec);
     S.listen s
 
